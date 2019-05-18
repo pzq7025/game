@@ -3,6 +3,7 @@
 # @Date: 2019-5-11 15:46
 # @Author: pzq    (*********@qq.com)
 import random
+import time
 import tkinter as tk
 from tkinter import *
 import pygame as py
@@ -23,6 +24,11 @@ class InterfaceWindow:
     __game_canvas_width = 700  # 界面宽度
     __game_canvas_height = 450  # 界面高度
     __score = 0  # 统计的分数
+    __large_time = 180  # 上限时间
+    __time = __large_time  # 实时游戏时间 开始等于最大时间
+    __add_time = 5  # 每次消除增加的时间和时间柱开始的位置
+    __cycle = __large_time  # 循环量
+    __scalar = 180 / __cycle  # 矩形每次填充的量  速率  180是矩形高度
     __game_start = False  # 游戏的状态
     __icons = []  # 存小图片
     __map = []  # 游戏地图
@@ -34,7 +40,7 @@ class InterfaceWindow:
     __isFirst = True  # 第一次查看
     __isGameStart = False  # 游戏是否开始
     __formerPoint = None  # 点的形式
-    __score_level = 3  # 分数的等级
+    __score_level = 2  # 分数的等级
     __score_base = 10  # 分数的基数
     EMPTY = -1  # 该位置为空
     NONE_LINK = 0  # 没有连接的
@@ -46,6 +52,7 @@ class InterfaceWindow:
         """
         初始化界面信息
         """
+        self.n = 0  # 每次画布的增加量  和图片数量冲突了
         self.root = tk.Tk()
         # 背景的添加
         bg = PhotoImage(file=r".\images\pk_bg.png")
@@ -58,27 +65,11 @@ class InterfaceWindow:
         py.mixer.init()
         py.mixer.music.load(r'.\videos\forget.mp3')
         py.mixer.music.play(-1, 10)
-        # screen = pygame.display.set_mode((800, 600))  # 窗口界面是否显示出来
-        # 设置游戏界面大小
-        # self.game_window(self.__game_canvas_width, self.__game_canvas_height)
         # 设置大小和位置 这样可以保证先生成游戏界面再来生成操作界面
         self.__add_components()
         # 设置窗口大小
         self.root.geometry("700x475+250+100")
         self.root.mainloop()
-
-    def game_window(self, width, height):
-        """
-        游戏界面的初始化信息
-        :param width: 游戏界面的宽
-        :param height: 游戏界面的长
-        :return:
-        """
-        screenwidth = self.root.winfo_screenwidth()
-        screenheight = self.root.winfo_screenheight()
-        # 保证在中间
-        size = f"{width}x{height}+{int((screenwidth - width) / 2)}+{int((screenheight - height) / 2)}"
-        self.root.geometry(size)
 
     def __add_components(self):
         """
@@ -106,7 +97,19 @@ class InterfaceWindow:
         self.show_score = tk.Label(self.root, bg="lightgrey", fg="red", font="叶根友毛笔行书2.0版 15 bold", text=f"分数\n{self.__score}")
         self.show_score.place(x=35, y=20)
 
+        # 时间画布、动画
+        self.time_counter = tk.Canvas(self.root, width=22, height=180, bg="yellow")
+        self.time_counter.place(x=615, y=80)
+
+        # 时间显示
+        self.show_time = tk.Label(self.root, bg="lightgrey", fg="purple", font="叶根友毛笔行书2.0版 15 bold", text=f"剩余时间\n{self.__time}s")
+        self.show_time.place(x=590, y=20)
+
     def begin_game(self):
+        """
+        对游戏进行初始化  包括分解图片 生成地图以及计时
+        :return:
+        """
         # 分解图片
         self.extract_small_icon_list()
         # 初始化地图
@@ -114,55 +117,101 @@ class InterfaceWindow:
         # 将图片和地图联系起来
         self.draw_map()
         self.__game_start = True
+        self.counter()
 
-    def tip(self):
-        self.__score += 50
-        self.show_score.configure(text=f"分数\n{self.__score}", fg="red")
+    def counter(self):
+        """
+        计时柱的构建
+        :return:
+        """
+        try:
+            fill_line = self.time_counter.create_rectangle(1.5, 1.5, 23, 0, width=0, fill="white")
+            while self.__cycle >= 0:  # self.time 做循环量处理
+                self.n += self.__scalar
+                # 移动开始减少
+                self.time_counter.coords(fill_line, (0, 0, 80, self.n))
+                self.root.update()
+                self.__time -= 1
+                self.show_time.configure(text=f"剩余时间\n{self.__time}s", fg="purple")
+                time.sleep(1.0)  # 控制进度条流动的速度 1秒一次
+                # 时间结束  游戏结束  退出
+                if self.__time == 0:
+                    tk.messagebox.showinfo("Tip", f"最后分数:{self.__score}")
+                    self.__game_start = False
+                    exit()
+                self.__cycle = self.__time  # 保证了和时间的一致性
+        except Exception as e:
+            _ = e.__traceback__
+            exit()
+
+    def continue_game(self):
+        """
+        继续游戏的游戏设定
+        :return:
+        """
+        continue_game = askokcancel('提示', '是否接续游戏')
+        if continue_game:
+            # 继续游戏
+            self.__n = 8
+            self.__game_size = 8
+            self.__icon_kind = self.__game_size * self.__game_size / self.__n
+            self.begin_game()
+        else:
+            # 游戏结束
+            tk.messagebox.showinfo("Tip", f"最后分数:{self.__score}")
+            self.__score = 0
+            self.__game_start = False
+            exit()
+
+    @staticmethod
+    def tip():
+        try:
+            pause = askyesno("提示", "点击继续")
+            while True:
+                time.sleep(1)
+                if pause:
+                    break
+        except Exception as e:
+            _ = e.__traceback__
 
     def click_canvas(self, event):
-        if self.__game_start:
-            point = self.get_inner_point(Point(event.x, event.y))
-            # 有效点击坐标
-            if point.is_useful() and not self.empty_map(point):
-                if self.__isFirst:
-                    self.draw_selected_area(point)
-                    self.__isFirst = False
-                    self.__formerPoint = point
-                else:
-                    # 直接判断的
-                    if self.__formerPoint.equal(point):
-                        self.__isFirst = True
-                        self.canvas.delete("rectRedOne")
-
+        try:
+            # 如果游戏处于可以继续运行的状态
+            if self.__game_start:
+                point = self.get_inner_point(Point(event.x, event.y))
+                # 有效点击坐标
+                if point.is_useful() and not self.empty_map(point):
+                    if self.__isFirst:
+                        self.draw_selected_area(point)
+                        self.__isFirst = False
+                        self.__formerPoint = point
                     else:
-                        # 有拐角的
-                        link_type = self.get_link_type(self.__formerPoint, point)
-                        if link_type['type'] != self.NONE_LINK:
-                            self.clear_linked_blocks(self.__formerPoint, point)
-                            self.__score += self.__score_level * self.__score_base
-                            self.show_score.configure(text=f"分数\n{self.__score}", fg="red")
-                            self.canvas.delete("rectRedOne")
+                        # 直接判断的
+                        if self.__formerPoint.equal(point):
                             self.__isFirst = True
-                            if self.game_over():
-                                continue_game = askokcancel('提示', '是否接续游戏')
-                                if continue_game:
-                                    # 继续游戏
-                                    self.__n = 8
-                                    self.__game_size = 8
-                                    self.__icon_kind = self.__game_size * self.__game_size / self.__n
-                                    self.begin_game()
-                                else:
-                                    # 游戏结束
-                                    tk.messagebox.showinfo("Tip", f"最后分数:{self.__score}")
-                                    self.__score = 0
-                                    self.__game_start = False
-                        else:
-                            self.__formerPoint = point
                             self.canvas.delete("rectRedOne")
-                            self.draw_selected_area(point)
+
+                        else:
+                            # 有拐角的
+                            link_type = self.get_link_type(self.__formerPoint, point)
+                            if link_type['type'] != self.NONE_LINK:
+                                self.clear_linked_blocks(self.__formerPoint, point)
+                                self.detail()
+                                self.canvas.delete("rectRedOne")
+                                self.__isFirst = True
+                                if self.game_over():
+                                    # 通过的游戏结束
+                                    self.continue_game()
+                            else:
+                                self.__formerPoint = point
+                                self.canvas.delete("rectRedOne")
+                                self.draw_selected_area(point)
+        except Exception as e:
+            _ = e.__traceback__
 
     def exit_tk(self):
         self.root.quit()
+        exit(0)
 
     def draw_map(self):
         """
@@ -221,11 +270,11 @@ class InterfaceWindow:
         """
         # 将图片清空 保证在继续游戏的时候不会因为数组问题而报错
         self.__icons = []
-        image_source = Image.open(r".\images\naruto.png")
+        # image_source = Image.open(r".\images\naruto.png")
         for index in range(0, int(self.__icon_kind)):
-            region = image_source.crop((self.__icon_width * index, 0, self.__icon_width * index + self.__icon_width - 1, self.__icon_height - 1))
+            # region = image_source.crop((self.__icon_width * index, 0, self.__icon_width * index + self.__icon_width - 1, self.__icon_height - 1))
             # 这个可以加载其他的图片
-            # region = Image.open(r".\images\element_" + str(index + 1) + "_shrink.png")
+            region = Image.open(r".\images\element_" + str(index + 1) + "_shrink.png")
             self.__icons.append(ImageTk.PhotoImage(region))
 
     def get_x(self, x):
@@ -445,6 +494,27 @@ class InterfaceWindow:
             'type': self.NONE_LINK
         }
 
+    def detail(self):
+        """
+        消完之后做加分处理  加时处理
+        :return:
+        """
+        # 加分处理
+        self.__score += self.__score_level * self.__score_base
+        self.show_score.configure(text=f"分数\n{self.__score}", fg="red")
+
+        # 加时处理
+        # 由于一秒一减少  所以self.n的值和self.__time的值一样
+        self.__time += self.__add_time
+        self.n -= self.__scalar * self.__add_time
+        # 将溢出的全部删除
+        if self.__time >= self.__large_time:
+            self.show_time.configure(text=f"剩余时间\n{self.__large_time}s", fg="purple")
+            self.__time = self.__large_time
+            self.n = 0
+        else:
+            self.show_time.configure(text=f"剩余时间\n{self.__time}s", fg="purple")
+
 
 class Point:
     def __init__(self, x, y):
@@ -452,6 +522,10 @@ class Point:
         self.y = y
 
     def is_useful(self):
+        """
+        判断该点是否可用
+        :return:
+        """
         if self.x >= 0 and self.y >= 0:
             return True
         else:

@@ -76,6 +76,138 @@
 
 # 动画的添加
 # ======================================================================================================================================
+# import tkinter as tk
+# from PIL import ImageTk, Image
+# import time
+#
+# root = tk.Tk()
+# # 背景
+# time_s = 200
+# canvas = tk.Canvas(root, width=200, height=200, background="white")
+# canvas.place(x=10, y=20)
+# root.geometry("700x475+250+100")
+# fill_line = canvas.create_rectangle(0, 0, 50, time_s, fill='blue')
+#
+#
+# def decline(time_n):
+#     time_n -= 10
+#     canvas.coords(fill_line, (0, 0, 50, time_n))
+#     root.update()
+#
+#
+# button = tk.Button(root, text="Begin", command=decline(time_s))
+# button.pack()
+#
+# # while time_s >= 0:
+# #     canvas.create_rectangle(0, 0, 50, time_s, fill='blue')
+# #     time_s -= 10
+# #     canvas.configure(time_s)
+# #     time.sleep(2)
+# root.mainloop()
 
+# ========================================== 进度条 ==================================================================================
+import tkinter as tk
+import time
+
+# 创建主窗口
+window = tk.Tk()
+window.title('进度条')
+window.geometry('500x430')
+
+# 设置下载进度条
+canvas = tk.Canvas(window, width=22, height=180, bg="green")
+canvas.place(x=110, y=60)
+
+
+# 显示下载进度
+def progress():
+    # 填充进度条
+    fill_line = canvas.create_rectangle(1.5, 1.5, 23, 0, width=0, fill="white")
+    x = 360  # 未知变量，可更改
+    n = 180 / x  # 465是矩形填充满的次数
+    for i in range(x):
+        n += 180 / x
+        canvas.coords(fill_line, (0, 0, 60, n))
+        window.update()
+        time.sleep(0.02)  # 控制进度条流动的速度
+        if n == 180:
+            exit()
+
+    # # 清空进度条
+    # fill_line = canvas.create_rectangle(1.5, 1.5, 0, 23, width=0, fill="white")
+    # x = 500  # 未知变量，可更改
+    # n = 465 / x  # 465是矩形填充满的次数
+
+    # for t in range(x):
+    #     n = n + 465 / x
+    #     # 以矩形的长度作为变量值更新
+    #     canvas.coords(fill_line, (0, 0, n, 60))
+    #     window.update()
+    #     time.sleep(0)  # 时间为0，即飞速清空进度条
+
+
+def add():
+    a = 1
+    b = 2
+    c = a + b
+    if c == a:
+        pass
+
+
+btn_download = tk.Button(window, text='启动进度条', command=progress)
+btn_download.place(x=400, y=105)
+
+window.mainloop()
+# ======================================================================================================================================
+# from tkinter import *
+#
+# if __name__ == '__main__':
+#     root = Tk()
+#     root.geometry("500x400+200+200")
+#     canvas = Canvas(root, width=300, height=300, bg='green')
+#
+#     canvas.pack(expand=YES, fill=BOTH)
+#
+#     x0 = 150  # 圆心横坐标
+#
+#     y0 = 100  # 圆心纵坐标
+#
+#     # canvas.create_oval(x0 - 10, y0 - 10, x0 + 10, y0 + 10)  # 圆外矩形左上角与右下角坐标
+#     #
+#     # canvas.create_oval(x0 - 20, y0 - 20, x0 + 20, y0 + 20)  # 圆外矩形左上角与右下角坐标
+#     #
+#     # canvas.create_oval(x0 - 50, y0 - 50, x0 + 50, y0 + 50)  # 圆外矩形左上角与右下角坐标
+#     # points = [100, 140, 110, 110, 140, 100, 110, 90, 100, 60, 90, 90, 60, 100, 90, 110]
+#     points = [100, 140, 120, 160, 140, 140, 140, 40, 120, 20, 100, 40]
+#     canvas.create_polygon(points, outline='red', fill='yellow', width=3)
+#
+#     root.mainloop()
 
 # ======================================================================================================================================
+# from tkinter import *
+#
+# canvas_width = 500
+# canvas_height = 150
+#
+#
+# def paint(event):
+#     python_green = "#476042"
+#     x1, y1 = (event.x - 1), (event.y - 1)
+#     x2, y2 = (event.x + 1), (event.y + 1)
+#     w.create_oval(x1, y1, x2, y2, fill=python_green)
+#
+#
+# master = Tk()
+# master.title("Painting using Ovals")
+# w = Canvas(master,
+#            width=canvas_width,
+#            height=canvas_height)
+# w.pack(expand=YES, fill=BOTH)
+# w.bind("<B1-Motion>", paint)
+#
+# message = Label(master, text="Press and Drag the mouse to draw")
+# message.pack(side=BOTTOM)
+#
+# mainloop()
+
+# =========================================================================================================================================
